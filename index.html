@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Neon Void Survivor</title>
+
+    <!-- SEO & Social -->
+    <meta name="description" content="Survive endless waves of neon enemies! Level up, collect upgrades and defeat epic bosses in this fast-paced arcade shooter.">
+    <meta name="theme-color" content="#050510">
+    <meta property="og:title" content="Neon Void Survivor">
+    <meta property="og:description" content="Survive endless waves. Level up. Destroy the void.">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- Damage Flash Overlay -->
+    <div id="damageFlash"></div>
+
+    <!-- Toast notification container (replaces alert()) -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Animated Menu Background Canvas -->
+    <canvas id="menuCanvas"></canvas>
+
+    <!-- Game Canvas -->
+    <canvas id="gameCanvas" tabindex="1"></canvas>
+
+    <!-- UI Overlay Layer -->
+    <div id="uiLayer">
+
+        <!-- Main Menu -->
+        <div id="mainMenu" class="screen">
+            <h1 class="glow-text">NEON VOID<br><span class="subtitle">SURVIVOR</span></h1>
+
+            <div class="language-selector">
+                <select id="langSelect">
+                    <option value="en">English</option>
+                    <option value="tr">Türkçe</option>
+                    <option value="de">Deutsch</option>
+                    <option value="es">Español</option>
+                    <option value="ru">Русский</option>
+                    <option value="cn">中文</option>
+                    <option value="jp">日本語</option>
+                </select>
+            </div>
+            
+            <div class="theme-selector" style="position: absolute; top: 10px; left: 10px;">
+                <select id="mainThemeSelect" style="background: rgba(0,0,0,0.5); color: #fff; border: 1px solid var(--neon-blue); padding: 5px; border-radius: 5px; font-family: var(--ui-font); outline: none;">
+                    <option value="Neon Void">Neon Void</option>
+                    <option value="Blood & Gore">Blood & Gore</option>
+                    <option value="Garden">Garden</option>
+                    <option value="Toxic">Toxic</option>
+                    <option value="Ice">Ice</option>
+                    <option value="Crimson Night">Crimson Night</option>
+                </select>
+            </div>
+
+            <div class="menu-top-bar">
+                <div class="coin-display">
+                    <span class="coin-icon">🟡</span> <span id="menuCoinCount">0</span>
+                </div>
+            </div>
+
+            <div class="difficulty-selector" style="margin-bottom: 20px;">
+                <select id="difficultySelect" style="background: rgba(0,0,0,0.8); color: #fff; border: 2px solid var(--neon-blue); padding: 8px 16px; border-radius: 8px; font-family: var(--ui-font); font-size: 1.1rem; outline: none; text-align: center; font-weight: bold; cursor: pointer; text-transform: uppercase;">
+                    <option value="easy">🟩 Easy</option>
+                    <option value="medium" selected>🟨 Medium</option>
+                    <option value="hard">🟧 Hard</option>
+                    <option value="impossible">🟥 Impossible</option>
+                </select>
+            </div>
+
+            <div class="menu-buttons">
+                <button id="startBtn" class="neon-btn" data-lang="startBg">START GAME</button>
+                <button id="characterBtn" class="neon-btn character-btn">👤 CHARACTER</button>
+                <button id="shopBtn" class="neon-btn purple-btn" data-lang="shop">SHOP</button>
+                <button id="rateBtn" class="neon-btn rate-btn" data-lang="rateUs">⭐ RATE US</button>
+            </div>
+
+            <!-- Scoreboard -->
+            <div id="scoreboard" class="scoreboard">
+                <h3 data-lang="highScores">HIGH SCORES</h3>
+                <div id="scoreList">
+                    <div class="score-entry"><span>-</span><span>-</span></div>
+                </div>
+            </div>
+
+            <p class="credits" data-lang="tapToPlay">Tap / Click to Play</p>
+            <a id="privacyLink" href="https://sites.google.com/view/neonvoid-privacy" target="_blank" class="privacy-link" data-lang="privacy">Privacy Policy</a>
+
+            <!-- Banner Ad placeholder (shown in native Android app) -->
+            <div id="bannerAdContainer" class="banner-ad-container"></div>
+        </div>
+
+        <!-- HUD (Heads Up Display) -->
+        <div id="hud" class="hidden">
+            <!-- Top Center: Wave Indicator -->
+            <div class="hud-top-center">
+                <span id="waveIndicator" class="wave-text">WAVE 1</span>
+            </div>
+
+            <!-- Boss HUD Bar (hidden by default, shown when boss alive) -->
+            <div id="bossHUD" class="boss-hud hidden">
+                <div class="boss-hud-label">⚠ BOSS</div>
+                <div class="boss-hud-bar-bg">
+                    <div class="boss-hud-bar-fill" id="bossHUDBar"></div>
+                </div>
+            </div>
+
+            <div class="hud-left">
+                <!-- Grouped Bars -->
+                <div class="bar-group">
+                    <div class="bar-container">
+                        <span class="bar-label" data-lang="hp">HP</span>
+                        <div class="health-bar-fill" id="healthBar"></div>
+                    </div>
+                    <div class="bar-container" id="shieldBarContainer" style="display:none;">
+                        <span class="bar-label">🛡</span>
+                        <div class="shield-bar-fill" id="shieldBar"></div>
+                    </div>
+                    <div class="bar-container">
+                        <span class="bar-label" data-lang="xp">XP</span>
+                        <div class="xp-bar-fill" id="xpBar"></div>
+                    </div>
+                </div>
+
+                <div class="score-container">
+                    <span id="scoreLabel" data-lang="score">SCORE: </span>
+                    <span id="scoreValue" class="score-text">0</span>
+                </div>
+                <div class="coin-hud-container">
+                    <span class="coin-icon">🟡</span> <span id="hudCoinCount">0</span>
+                </div>
+                <div class="level-container">
+                    <span id="levelIndicator" class="level-text">LVL 1</span>
+                </div>
+                <div class="timer-container">
+                    <span id="timerValue">00:00</span>
+                </div>
+            </div>
+
+            <!-- Stats Panel (Right Side) -->
+            <div id="statsPanel" class="hud-right stats-box">
+                <h3 class="stats-title" data-lang="stats">STATS</h3>
+                <ul class="stats-list">
+                    <li><span data-lang="dmg">DMG</span>: <span id="statDamage">25</span></li>
+                    <li><span data-lang="spd">SPD</span>: <span id="statSpeed">100%</span></li>
+                    <li><span data-lang="rof">ROF</span>: <span id="statFireRate">100%</span></li>
+                    <li><span data-lang="blt">BLT</span>: <span id="statBulletSpeed">100%</span></li>
+                    <li><span data-lang="multi">MULTI</span>: <span id="statMultishot">0</span></li>
+                    <li><span data-lang="mag">MAG</span>: <span id="statMagnet">100%</span></li>
+                    <li><span data-lang="prc">PRC</span>: <span id="statPierce">0</span></li>
+                    <li><span data-lang="allies">ALLIES</span>: <span id="statAllies">0</span></li>
+                    <li><span data-lang="kills">KILLS</span>: <span id="statKills">0</span></li>
+                    <li><span data-lang="aura">AURA</span>: <span id="statAura">OFF</span></li>
+                    <li><span data-lang="vamp">VAMP</span>: <span id="statVamp">OFF</span></li>
+                </ul>
+            </div>
+
+            <!-- Minimap -->
+            <div id="minimapContainer" class="minimap-container">
+                <canvas id="minimapCanvas" width="110" height="110"></canvas>
+            </div>
+
+            <!-- Dash cooldown ring indicator -->
+            <div id="dashCooldown" class="dash-cooldown ready" title="DASH READY"></div>
+
+            <!-- In-game Rewarded Ad: 2x XP -->
+            <button id="xpBoostBtn" class="xp-boost-btn hidden" onclick="AdMobHelper && AdMobHelper.showXPBoost()">&#9658; 2x XP (Ad)</button>
+        </div>
+
+        <!-- Boss Warning -->
+        <div id="bossWarning" class="boss-warning hidden">⚠ BOSS INCOMING ⚠</div>
+
+        <!-- Countdown -->
+        <div id="countdown" class="countdown hidden"></div>
+
+        <!-- Combo Popup -->
+        <div id="comboPopup" class="combo-popup hidden"></div>
+
+        <!-- Level Up Modal -->
+        <div id="upgradeModal" class="modal hidden">
+            <h2 data-lang="levelUp">LEVEL UP!</h2>
+            <p data-lang="chooseUpgrade">Choose your upgrade</p>
+            <div id="upgradeOptions" class="upgrade-grid">
+                <!-- Options injected by JS -->
+            </div>
+        </div>
+
+        <!-- Pause Menu -->
+        <div id="pauseMenu" class="screen hidden">
+            <h2 class="glow-text" data-lang="paused">PAUSED</h2>
+            <div class="slider-container">
+                <label for="volumeSlider" data-lang="volume">MASTER VOLUME</label>
+                <input type="range" id="volumeSlider" min="0" max="100" value="50">
+            </div>
+            <div class="slider-container" style="margin-top: 10px;">
+                <label for="pauseThemeSelect" data-lang="theme">THEME</label>
+                <select id="pauseThemeSelect" style="width: 100%; background: #111; color: #fff; border: 1px solid var(--neon-blue); padding: 5px; border-radius: 5px; font-family: var(--ui-font); outline: none;">
+                    <option value="Neon Void">Neon Void</option>
+                    <option value="Blood & Gore">Blood & Gore</option>
+                    <option value="Garden">Garden</option>
+                    <option value="Toxic">Toxic</option>
+                    <option value="Ice">Ice</option>
+                    <option value="Crimson Night">Crimson Night</option>
+                </select>
+            </div>
+            <div class="menu-buttons">
+                <button id="resumeBtn" class="neon-btn" data-lang="resume">RESUME</button>
+                <button id="quitBtn" class="neon-btn caution" data-lang="mainMenu">MAIN MENU</button>
+            </div>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="gameOverScreen" class="screen hidden">
+            <h2 class="glow-text red" data-lang="gameOver">GAME OVER</h2>
+            <p><span data-lang="survived">SURVIVED</span>: <span id="finalTime">00:00</span></p>
+            <p><span data-lang="finalScore">SCORE</span>: <span id="finalScore">0</span></p>
+            <p class="final-coins"><span class="coin-icon">🟡</span> +<span id="finalCoins">0</span></p>
+            <p id="finalKills" style="font-family:'Rajdhani',sans-serif; font-size:1.1rem; opacity:0.8;"></p>
+            <button id="retryBtn" class="neon-btn" data-lang="tryAgain">TRY AGAIN</button>
+            <!-- Rewarded Ad Button -->
+            <button id="rewardedAdBtn" class="neon-btn rewarded-btn" onclick="AdMobHelper && AdMobHelper.showRewarded()">
+                ▶ REVIVE (Watch Ad)
+            </button>
+            <button id="menuBtn" class="neon-btn" data-lang="mainMenu">MAIN MENU</button>
+        </div>
+
+        <!-- Character Customization Screen -->
+        <div id="characterScreen" class="screen hidden">
+            <h2 class="glow-text" style="color:#00f3ff;">CHARACTER</h2>
+
+            <!-- Preview Canvas -->
+            <canvas id="charPreviewCanvas" width="160" height="200" style="border:2px solid rgba(0,243,255,0.4);border-radius:12px;background:rgba(0,0,0,0.5);"></canvas>
+
+            <!-- Gender Selection -->
+            <div class="char-section">
+                <p class="char-label">GENDER</p>
+                <div class="char-option-row">
+                    <button class="char-opt-btn active" id="genderMale" onclick="setCharGender('male')">♂ MALE</button>
+                    <button class="char-opt-btn" id="genderFemale" onclick="setCharGender('female')">♀ FEMALE</button>
+                </div>
+            </div>
+
+            <!-- Hair Style Selection -->
+            <div class="char-section">
+                <p class="char-label">HAIR STYLE</p>
+                <div class="char-option-row" id="hairStyleRow">
+                    <button class="char-opt-btn active" onclick="setCharHair('short')">Short</button>
+                    <button class="char-opt-btn" onclick="setCharHair('long')">Long</button>
+                    <button class="char-opt-btn" onclick="setCharHair('spiky')">Spiky</button>
+                    <button class="char-opt-btn" onclick="setCharHair('bun')">Bun</button>
+                </div>
+            </div>
+
+            <!-- Hair Color Selection -->
+            <div class="char-section">
+                <p class="char-label">HAIR COLOR</p>
+                <div class="char-option-row">
+                    <button class="color-dot" style="background:#1a1a1a;" onclick="setCharHairColor('#1a1a1a')"></button>
+                    <button class="color-dot" style="background:#8B4513;" onclick="setCharHairColor('#8B4513')"></button>
+                    <button class="color-dot" style="background:#FFD700;" onclick="setCharHairColor('#FFD700')"></button>
+                    <button class="color-dot" style="background:#FF6666;" onclick="setCharHairColor('#FF6666')"></button>
+                    <button class="color-dot" style="background:#AA00FF;" onclick="setCharHairColor('#AA00FF')"></button>
+                    <button class="color-dot" style="background:#00f3ff;" onclick="setCharHairColor('#00f3ff')"></button>
+                    <button class="color-dot" style="background:#ffffff;" onclick="setCharHairColor('#ffffff')"></button>
+                </div>
+            </div>
+
+            <!-- Suit Color -->
+            <div class="char-section">
+                <p class="char-label">SUIT COLOR</p>
+                <div class="char-option-row">
+                    <button class="color-dot" style="background:#00f3ff;" onclick="setCharSuitColor('#00f3ff')"></button>
+                    <button class="color-dot" style="background:#ff00ff;" onclick="setCharSuitColor('#ff00ff')"></button>
+                    <button class="color-dot" style="background:#00ff66;" onclick="setCharSuitColor('#00ff66')"></button>
+                    <button class="color-dot" style="background:#ff8800;" onclick="setCharSuitColor('#ff8800')"></button>
+                    <button class="color-dot" style="background:#ffff00;" onclick="setCharSuitColor('#ffff00')"></button>
+                    <button class="color-dot" style="background:#cc00ff;" onclick="setCharSuitColor('#cc00ff')"></button>
+                </div>
+            </div>
+
+            <button id="saveCharBtn" class="neon-btn" style="margin-top:10px;">✔ SAVE</button>
+            <button id="closeCharBtn" class="neon-btn caution">✖ BACK</button>
+        </div>
+
+        <!-- Shop Modal -->
+        <div id="shopScreen" class="screen hidden">
+            <h2 class="glow-text purple" data-lang="shop">UPGRADES</h2>
+            <div class="coin-display large">
+                <span class="coin-icon">🟡</span> <span id="shopCoinCount">0</span>
+            </div>
+            
+            <div class="shop-grid">
+                <!-- HP Upgrade -->
+                <div class="shop-item">
+                    <h3 data-lang="u_maxHp">Max HP</h3>
+                    <p data-lang="shop_hp_desc">Increases starting Health.</p>
+                    <p>Lvl <span id="lvl_hp">0</span>/5</p>
+                    <button class="neon-btn small-btn" id="buy_hp">500 🟡</button>
+                </div>
+                <!-- Damage Upgrade -->
+                <div class="shop-item">
+                    <h3 data-lang="dmg">Damage</h3>
+                    <p data-lang="shop_dmg_desc">Increases base Damage.</p>
+                    <p>Lvl <span id="lvl_dmg">0</span>/5</p>
+                    <button class="neon-btn small-btn" id="buy_dmg">500 🟡</button>
+                </div>
+                <!-- Speed Upgrade -->
+                <div class="shop-item">
+                    <h3 data-lang="spd">Speed</h3>
+                    <p data-lang="shop_spd_desc">Increases base Speed.</p>
+                    <p>Lvl <span id="lvl_spd">0</span>/5</p>
+                    <button class="neon-btn small-btn" id="buy_spd">500 🟡</button>
+                </div>
+                <!-- Coin Multiplier Upgrade -->
+                <div class="shop-item special-item">
+                    <h3 data-lang="shop_greed">Greed</h3>
+                    <p data-lang="shop_greed_desc">Increase Coin drop rate.</p>
+                    <p>Lvl <span id="lvl_coin">0</span>/5</p>
+                    <button class="neon-btn small-btn" id="buy_coin">1000 🟡</button>
+                </div>
+            </div>
+
+            <!-- Rewarded Ad Button for Coins -->
+            <button id="adCoinBtn" class="neon-btn rewarded-btn" style="margin-top:20px;" onclick="AdMobHelper && AdMobHelper.showCoinReward()">
+                ▶ GET 500 🟡 (Ad)
+            </button>
+
+            <button id="closeShopBtn" class="neon-btn caution" data-lang="close" style="margin-top:20px;">BACK</button>
+        </div>
+
+        <!-- Virtual Joystick (mobile) -->
+        <div id="joystick">
+            <div id="joystickKnob"></div>
+        </div>
+
+        <!-- Mobile Pause Button -->
+        <button id="mobilePauseBtn" class="mobile-pause-btn hidden">⏸</button>
+
+    </div>
+
+    <!-- AdMob Helper -->
+    <script src="admob-config.js"></script>
+    <script src="game.js"></script>
+
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(() => {});
+        }
+    </script>
+</body>
+
+</html>

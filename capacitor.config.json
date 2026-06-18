@@ -1,0 +1,37 @@
+{
+    "appId": "com.neonvoid.survivor",
+    "appName": "Neon Void Survivor",
+    "webDir": "www",
+    "plugins": {
+        "SplashScreen": {
+            "launchShowDuration": 2000,
+            "launchAutoHide": true,
+            "backgroundColor": "#050510",
+            "androidSplashResourceName": "splash",
+            "androidScaleType": "CENTER_CROP",
+            "showSpinner": false
+        },
+        "StatusBar": {
+            "style": "Dark",
+            "backgroundColor": "#050510"
+        },
+        "Keyboard": {
+            "resize": "none"
+        },
+        "AdMob": {
+            "appId": {
+                "android": "ca-app-pub-1981864744211677~6041022093"
+            },
+            "testingDevices": [],
+            "initializeForTesting": false
+        }
+    },
+    "server": {
+        "iosScheme": "ionic"
+    },
+    "android": {
+        "allowMixedContent": true,
+        "captureInput": true,
+        "webContentsDebuggingEnabled": false
+    }
+}

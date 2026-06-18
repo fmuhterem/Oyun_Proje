@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Klavye Testi</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #111;
+            color: #0f0;
+            font-family: monospace;
+            font-size: 24px;
+        }
+
+        #output {
+            border: 2px solid #0f0;
+            padding: 20px;
+            min-height: 200px;
+        }
+
+        .key {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 5px;
+            background: #0f0;
+            color: #000;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>KLAVYE TEST - WASD Basın</h1>
+    <div id="output">Tuşlara basın...</div>
+
+    <script>
+        const output = document.getElementById('output');
+        const keys = {};
+
+        document.addEventListener('keydown', (e) => {
+            keys[e.key.toLowerCase()] = true;
+            updateDisplay();
+        });
+
+        document.addEventListener('keyup', (e) => {
+            keys[e.key.toLowerCase()] = false;
+            updateDisplay();
+        });
+
+        function updateDisplay() {
+            const pressed = Object.keys(keys).filter(k => keys[k]);
+            output.innerHTML = pressed.length > 0
+                ? pressed.map(k => `<span class="key">${k.toUpperCase()}</span>`).join('')
+                : 'Tuşlara basın...';
+        }
+    </script>
+</body>
+
+</html>
