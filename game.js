@@ -1081,6 +1081,7 @@ class Enemy {
         this.active = true;
         this.isBoss = false;
         this.hitFlashTimer = 0;
+        this.contactDamageTimer = 0;
     }
     update(dt) {
         const angle = Math.atan2(player.y - this.y, player.x - this.x);
@@ -1744,6 +1745,7 @@ function updateAllEntities(dt) {
     for (let i = enemies.length - 1; i >= 0; i--) {
         const enemy = enemies[i];
         enemy.hitFlashTimer = Math.max(0, enemy.hitFlashTimer - dt);
+        enemy.contactDamageTimer = Math.max(0, enemy.contactDamageTimer - dt);
         enemy.update(dt);
         const dist = Math.hypot(player.x - enemy.x, player.y - enemy.y);
         if (dist < player.radius + enemy.radius) {
@@ -1756,9 +1758,12 @@ function updateAllEntities(dt) {
                 player.onKill();
             } else {
                 // Fixed: use enemy.damage instead of hardcoded 10
-                player.takeDamage(enemy.damage);
+                if (enemy.contactDamageTimer <= 0) {
+                    player.takeDamage(enemy.damage);
+                    enemy.contactDamageTimer = 650;
+                }
                 createExplosion(enemy.x, enemy.y, CONFIG.COLORS.ENEMY);
-                enemies.splice(i, 1);
+                if (player.health > 0) enemies.splice(i, 1);
             }
         }
     }
