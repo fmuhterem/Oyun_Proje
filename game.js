@@ -865,7 +865,7 @@ class Player {
     gainXp(amount) {
         const total = Math.round(amount * this.xpMultiplier * (1 + this.luckBonus));
         this.xp += total;
-        createPickupBurst(coin.x, coin.y, CONFIG.COLORS.COIN);
+        createPickupBurst(this.x, this.y, CONFIG.COLORS.XP);
         audio.playCollect();
         if (this.xp >= this.xpToNextLevel) this.levelUp();
         updateHUD();
@@ -1704,6 +1704,7 @@ function updateAllEntities(dt) {
             coins += coin.amount;
             gameState.runCoins += coin.amount;
             updateMenuCoinUI();
+            createPickupBurst(coin.x, coin.y, CONFIG.COLORS.COIN);
             audio.playCollect();
             spawnFloatingText(coin.x, coin.y, `+${coin.amount}\uD83D\uDFE1`, CONFIG.COLORS.COIN);
             coinPickups.splice(i, 1);
