@@ -17,13 +17,6 @@
         },
         "Keyboard": {
             "resize": "none"
-        },
-        "AdMob": {
-            "appId": {
-                "android": "ca-app-pub-1981864744211677~6041022093"
-            },
-            "testingDevices": [],
-            "initializeForTesting": false
         }
     },
     "server": {

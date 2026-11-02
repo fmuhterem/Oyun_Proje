@@ -1,10 +1,10 @@
-const CACHE_NAME = 'neon-void-v1';
+const CACHE_NAME = 'neon-void-poki-v2';
 const ASSETS = [
     './',
     './index.html',
     './game.js',
     './style.css',
-    './admob-config.js',
+    './poki-config.js',
     './manifest.json',
     'https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap'
 ];

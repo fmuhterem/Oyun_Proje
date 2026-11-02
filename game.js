@@ -287,7 +287,7 @@ const CONFIG = {
     PLAYER_BASE_HP:      150,
     PROJECTILE_SPEED:    12,
 
-    ENEMY_SPAWN_RATE_MS: 1200,
+    ENEMY_SPAWN_RATE_MS: 1050,
     ENEMY_BASE_SPEED:    2,
 
     BOX_SPAWN_CHANCE:    0.003,  // per-frame probability of spawning a mystery box
@@ -865,6 +865,7 @@ class Player {
     gainXp(amount) {
         const total = Math.round(amount * this.xpMultiplier * (1 + this.luckBonus));
         this.xp += total;
+        createPickupBurst(coin.x, coin.y, CONFIG.COLORS.COIN);
         audio.playCollect();
         if (this.xp >= this.xpToNextLevel) this.levelUp();
         updateHUD();
@@ -1079,6 +1080,7 @@ class Enemy {
         this.color  = CONFIG.COLORS.ENEMY;
         this.active = true;
         this.isBoss = false;
+        this.hitFlashTimer = 0;
     }
     update(dt) {
         const angle = Math.atan2(player.y - this.y, player.x - this.x);
@@ -1257,6 +1259,8 @@ class ExploderEnemy extends Enemy {
     /** Triggers explosion, dealing area damage to player and chain-damage to nearby enemies. */
     explode() {
         createExplosion(this.x, this.y, this.color, 20);
+        createExplosion(enemy.x, enemy.y, enemy.color || CONFIG.COLORS.ENEMY, isBoss ? 32 : 16);
+        createPickupBurst(enemy.x, enemy.y, CONFIG.COLORS.XP);
         audio.playExplosion();
         if (Math.hypot(player.x - this.x, player.y - this.y) < this.EXPLOSION_RANGE) {
             player.takeDamage(this.EXPLOSION_DAMAGE);
@@ -1406,19 +1410,29 @@ class Projectile {
 
 // ─── PARTICLE ────────────────────────────────────────────────
 class Particle {
-    constructor(x, y, color) {
+    constructor(x, y, color, speedMultiplier = 1) {
         this.x = x; this.y = y; this.color = color;
         const angle = Math.random() * Math.PI * 2;
-        const speed = Math.random() * 3;
+        const speed = (Math.random() * 3 + 1) * speedMultiplier;
         this.vx = Math.cos(angle) * speed;
         this.vy = Math.sin(angle) * speed;
-        this.life = 1.0; this.decay = 0.05;
+        this.life = 1.0; this.decay = 0.035 + Math.random() * 0.025;
+        this.size = 1.5 + Math.random() * 2.5;
     }
-    update() { this.x += this.vx; this.y += this.vy; this.life -= this.decay; }
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vx *= 0.96;
+        this.vy *= 0.96;
+        this.life -= this.decay;
+    }
     draw() {
         ctx.globalAlpha = this.life;
         ctx.fillStyle = this.color;
-        ctx.beginPath(); ctx.arc(this.x, this.y, 2, 0, Math.PI*2); ctx.fill();
+        ctx.shadowColor = this.color;
+        ctx.shadowBlur = 6;
+        ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fill();
+        ctx.shadowBlur = 0;
         ctx.globalAlpha = 1.0;
     }
 }
@@ -1470,6 +1484,10 @@ function isInView(x, y, radius) {
 /** Spawns a burst of particles at a world position. */
 function createExplosion(x, y, color, count = 8) {
     for (let i = 0; i < count; i++) particles.push(new Particle(x, y, color));
+}
+
+function createPickupBurst(x, y, color) {
+    for (let i = 0; i < 10; i++) particles.push(new Particle(x, y, color, 1.8));
 }
 
 /** Spawns 3 ally units near (x, y). Called when a mystery box is opened. */
@@ -1665,7 +1683,11 @@ function updateAllEntities(dt) {
             gem.x += (player.x - gem.x) * 0.1;
             gem.y += (player.y - gem.y) * 0.1;
         }
-        if (dist < player.radius) { player.gainXp(gem.value); xpGems.splice(i, 1); }
+        if (dist < player.radius) {
+            createPickupBurst(gem.x, gem.y, CONFIG.COLORS.XP);
+            player.gainXp(gem.value);
+            xpGems.splice(i, 1);
+        }
     }
 
     // Coin pickups — magnet pull and collection
@@ -1721,6 +1743,7 @@ function updateAllEntities(dt) {
     // Enemies — update, collide with player
     for (let i = enemies.length - 1; i >= 0; i--) {
         const enemy = enemies[i];
+        enemy.hitFlashTimer = Math.max(0, enemy.hitFlashTimer - dt);
         enemy.update(dt);
         const dist = Math.hypot(player.x - enemy.x, player.y - enemy.y);
         if (dist < player.radius + enemy.radius) {
@@ -1750,8 +1773,10 @@ function updateAllEntities(dt) {
             if (proj.hitList.includes(enemy)) continue;
             if (Math.hypot(proj.x - enemy.x, proj.y - enemy.y) < proj.radius + enemy.radius) {
                 enemy.hp -= player.damage;
+                enemy.hitFlashTimer = 90;
                 proj.hitList.push(enemy);
-                createExplosion(proj.x, proj.y, CONFIG.COLORS.PROJECTILE);
+                createExplosion(proj.x, proj.y, '#ffffff', 5);
+                audio.playHit();
                 spawnFloatingText(enemy.x, enemy.y, Math.round(player.damage));
                 if (enemy.hp <= 0) {
                     if (enemy instanceof ExploderEnemy) enemy.explode();
@@ -1820,6 +1845,18 @@ function drawAllEntities() {
     mysteryBoxes.forEach(b => b.draw());
     allies.forEach(a       => a.draw());
     enemies.forEach(e      => e.draw());
+    enemies.forEach(e => {
+        if (e.hitFlashTimer <= 0 || !isInView(e.x, e.y, e.radius + 5)) return;
+        ctx.save();
+        ctx.globalAlpha = Math.min(1, e.hitFlashTimer / 90);
+        ctx.fillStyle = '#fff';
+        ctx.shadowColor = '#fff';
+        ctx.shadowBlur = 18;
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, e.radius + 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    });
     projectiles.forEach(p  => p.draw());
     enemyBullets.forEach(b => b.draw());
     player.draw();
@@ -1922,7 +1959,7 @@ function loop() {
     updateComboSystem(dt);
 
     // Spawn enemies
-    let spawnRate = CONFIG.ENEMY_SPAWN_RATE_MS - (gameState.timeElapsed / 500) - (gameState.wave * 15);
+    let spawnRate = CONFIG.ENEMY_SPAWN_RATE_MS - (gameState.timeElapsed / 500) - (gameState.wave * 18);
     if (gameState.difficulty === 'impossible') spawnRate *= 0.5;
     else if (gameState.difficulty === 'hard') spawnRate *= 0.8;
     else if (gameState.difficulty === 'easy') spawnRate *= 1.5;
@@ -1930,7 +1967,8 @@ function loop() {
 
     // Cap enemies at 150 to prevent impossible mode lag
     if (now - lastSpawn > spawnRate && enemies.length < 150) {
-        let count = 1 + Math.floor(gameState.wave / 5);
+        let count = 1 + Math.floor(gameState.wave / 4);
+        if (gameState.timeElapsed < 30000) count += 1;
         if (gameState.difficulty === 'impossible') count += 1;
         for (let s = 0; s < count; s++) enemies.push(spawnEnemy());
         lastSpawn = now;
@@ -2100,7 +2138,7 @@ function gameOver() {
     ui.gameOver.classList.remove('hidden');
     ui.hud.classList.add('hidden');
 
-    if (window.AdMobHelper) window.AdMobHelper.maybeShowInterstitial();
+    if (window.PokiAds) window.PokiAds.maybeShowInterstitial();
 }
 
 function saveScore(score, time, kills) {

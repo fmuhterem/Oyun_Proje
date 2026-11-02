@@ -3,3 +3,6 @@ android/
 www/
 .idea/
 .DS_Store
+.vscode/
+*.keystore
+*.jks

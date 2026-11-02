@@ -180,7 +180,7 @@
             <div id="dashCooldown" class="dash-cooldown ready" title="DASH READY"></div>
 
             <!-- In-game Rewarded Ad: 2x XP -->
-            <button id="xpBoostBtn" class="xp-boost-btn hidden" onclick="AdMobHelper && AdMobHelper.showXPBoost()">&#9658; 2x XP (Ad)</button>
+            <button id="xpBoostBtn" class="xp-boost-btn hidden" onclick="PokiAds.showXPBoost()">&#9658; 2x XP (Ad)</button>
         </div>
 
         <!-- Boss Warning -->
@@ -233,8 +233,8 @@
             <p class="final-coins"><span class="coin-icon">🟡</span> +<span id="finalCoins">0</span></p>
             <p id="finalKills" style="font-family:'Rajdhani',sans-serif; font-size:1.1rem; opacity:0.8;"></p>
             <button id="retryBtn" class="neon-btn" data-lang="tryAgain">TRY AGAIN</button>
-            <!-- Rewarded Ad Button -->
-            <button id="rewardedAdBtn" class="neon-btn rewarded-btn" onclick="AdMobHelper && AdMobHelper.showRewarded()">
+            <!-- Poki rewarded ad button -->
+            <button id="rewardedAdBtn" class="neon-btn rewarded-btn" onclick="PokiAds.showRewarded()">
                 ▶ REVIVE (Watch Ad)
             </button>
             <button id="menuBtn" class="neon-btn" data-lang="mainMenu">MAIN MENU</button>
@@ -337,7 +337,7 @@
             </div>
 
             <!-- Rewarded Ad Button for Coins -->
-            <button id="adCoinBtn" class="neon-btn rewarded-btn" style="margin-top:20px;" onclick="AdMobHelper && AdMobHelper.showCoinReward()">
+            <button id="adCoinBtn" class="neon-btn rewarded-btn" style="margin-top:20px;" onclick="PokiAds.showCoinReward()">
                 ▶ GET 500 🟡 (Ad)
             </button>
 
@@ -354,8 +354,9 @@
 
     </div>
 
-    <!-- AdMob Helper -->
-    <script src="admob-config.js"></script>
+    <!-- Poki SDK is provided by Poki on the published game page. -->
+    <script src="https://game-cdn.poki.com/scripts/v2/poki-sdk.js"></script>
+    <script src="poki-config.js"></script>
     <script src="game.js"></script>
 
     <!-- Service Worker Registration -->

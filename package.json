@@ -9,15 +9,19 @@
     "build:android": "npx cap build android",
     "run:android": "npx cap run android"
   },
-  "keywords": ["game", "arcade", "neon", "survivor", "android"],
+  "keywords": [
+    "game",
+    "arcade",
+    "neon",
+    "survivor",
+    "android"
+  ],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
     "@capacitor/android": "^8.0.2",
     "@capacitor/cli": "^8.0.2",
-    "@capacitor/core": "^8.0.2",
-    "@capacitor-community/admob": "^6.0.0"
+    "@capacitor/core": "^8.0.2"
   }
 }
-
